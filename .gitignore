@@ -1,2 +1,4 @@
 dist
 MANIFEST
+build/
+vitalharsharm/*pyc
