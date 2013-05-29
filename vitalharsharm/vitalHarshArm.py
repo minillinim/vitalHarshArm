@@ -49,10 +49,9 @@ __status__ = "Alpha"
 import argparse
 import sys
 import os 
-import pkgutil
 
 # VHA imports
-import VHAUtils
+from VHAUtils import TCBuilder
 
 ###############################################################################
 ###############################################################################
@@ -71,6 +70,6 @@ class VHAOptionsParser():
     def __init__(self): pass
     
     def parseOptions(self, options ):
-        memH = pkgutil.get_data('vitalharsharm','inc/MemManager.h')
-        print memH.encode('utf-8')
-
+        #memH = pkgutil.get_data('vitalharsharm','inc/MemManager.h')
+        TCB = TCBuilder()
+        TCB.parseTemplate(options.template)

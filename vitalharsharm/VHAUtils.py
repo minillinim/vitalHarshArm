@@ -46,6 +46,41 @@ __status__ = "Alpha"
 
 ###############################################################################
 
+import json
+import re
+import StringIO
+import pkgutil
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
+
+class TCBuilder:
+    def __init__(self): pass
+    
+    def parseTemplate(self, templateFileName):
+        """Parse the template file and create classTemplate instances"""
+        strippedJSON = StringIO.StringIO()
+        with open(templateFileName,'r') as f:
+            for line in f:
+                strippedJSON.write(self.removeComments(line))
+            
+        strippedJSON_fh = StringIO.StringIO(strippedJSON.getvalue())
+        strippedJSON.close()
+        data = json.load(strippedJSON_fh)
+        print json.dumps(data, separators=(',',':'))
+        strippedJSON_fh.close()
+
+    def removeComments(self, string):
+        """Strip C/C++ style comments from a string
+        
+        From: http://stackoverflow.com/questions/2319019/using-regex-to-remove-comments-from-source-files
+        """
+        string = re.sub(re.compile("/\*.*?\*/",re.DOTALL ) ,"" ,string) # remove all occurance streamed comments (/*COMMENT */) from string
+        string = re.sub(re.compile("//.*?\n" ) ,"" ,string) # remove all occurance singleline comments (//COMMENT\n ) from string
+        return string
+
 ###############################################################################
 ###############################################################################
 ###############################################################################

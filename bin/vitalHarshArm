@@ -56,6 +56,59 @@ from vitalharsharm import vitalHarshArm
 ###############################################################################
 ###############################################################################
 
+def printHelp():
+    print '''\
+    
+            ...::: vitalHarshArm :::...      
+
+       Making memory rad C++ classes for kix
+
+ VHA template overview:
+
+    You should include all class templates in ONE template file. VHA will
+    produce a set of .cpp and .h files which you can copy into your project
+    directory. You should NOT modify these files by hand. Instead they should
+    be wrapped and accessed via that wrapper. 
+
+ Template fields:
+   
+    You can specify any number of fields for each class and VHA will produce
+    appropriate get and set routines. Routines automatically provided are:
+   
+    int      : signed integer             : Get Set Increment Decrement Reset
+    uint     : unsigned integer           : Get Set Increment Decrement Reset
+    pointer  : pointer to tclass instance : Get Set Clear
+    data     : binary data container      : Get Set Clear
+    flag     : boolean flag               : Is Set Clear
+    
+ Template format:
+     
+    Templates are written in JSON format (so no comments!). Class templates
+    include a mix of compulsory and optional sections.
+
+ {
+     "classes" : [
+        {
+            ...
+             "className"   : "String",                       // Name of the class
+             "idName"      : "String",                       // Instance Id type name
+             <"parent"     : "None|String",>                 // Parent class, controls memory
+             <"templated"  : "True|False",>                  // Class uses C++ templates
+             <"deleteable" : "True|False",>                  // Instances can be deleted
+             <"active"     : "True|False",>                  // Use this template
+             "fields"      : [                               // Class fields
+                 {
+                     "f0" : "int,7,name,comment",            // 7 bit signed int at pos 0
+                     "f1" : "flag,1,name,comment",
+                     "f2" : "pointer,0,className,comment",
+                     "f3" : "uint,24,name,comment"          // 24 bit unsigned int at pos 41
+                     ...
+                 }
+             ]
+         }
+     ]
+ }    '''
+
 if __name__ == '__main__':
 
     #-------------------------------------------------
@@ -68,7 +121,12 @@ if __name__ == '__main__':
         
     #-------------------------------------------------
     # get and check options
-    args = parser.parse_args()
+    args = None
+    if(len(sys.argv) == 1 or sys.argv[1] == '-h' or sys.argv == '--help'):
+        printHelp()
+        sys.exit(0)
+    else:
+        args = parser.parse_args()
 
     #-------------------------------------------------
     # do what we came here to do
