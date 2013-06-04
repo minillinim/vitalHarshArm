@@ -72,4 +72,6 @@ class VHAOptionsParser():
     def parseOptions(self, options ):
         #memH = pkgutil.get_data('vitalharsharm','inc/MemManager.h')
         TCB = TCBuilder()
-        TCB.parseTemplate(options.template)
+        TCB.loadTemplate(options.template)
+        print TCB
+        #TCB.createClasses()
