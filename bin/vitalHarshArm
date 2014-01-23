@@ -9,7 +9,7 @@
 #                                                                             #
 ###############################################################################
 #                                                                             #
-#        888     888 d8b 888    888                 d8888 8888888b.           #  
+#        888     888 d8b 888    888                 d8888 8888888b.           #
 #        888     888 Y8P 888    888                d88888 888   Y88b          #
 #        888     888     888    888               d88P888 888    888          #
 #        Y88b   d88P 888 8888888888  8888b.      d88P 888 888   d88P          #
@@ -38,8 +38,8 @@
 __author__ = "Michael Imelfort"
 __copyright__ = "Copyright 2012"
 __credits__ = ["Michael Imelfort"]
-__license__ = "GPL3"
-__version__ = "0.0.1"
+__license__ = "LGPL2.1"
+__version__ = "0.1.0"
 __maintainer__ = "Michael Imelfort"
 __email__ = "mike@mikeimelfort.com"
 __status__ = "Alpha"
@@ -48,77 +48,51 @@ __status__ = "Alpha"
 
 import argparse
 import sys
-import re
-from vitalharsharm import vitalHarshArm
+
+# VHA imports
+from vitalharsharm.VHAUtils import TCBuilder
 
 ###############################################################################
 ###############################################################################
 ###############################################################################
 ###############################################################################
 
+def doWork(args):
+    """Wrapper function to allow easy profiling"""
+    TCB = TCBuilder()
+    TCB.loadTemplate(args.template)
+    TCB.createClasses(args.folder, makeTest=args.test)
+
+###############################################################################
+###############################################################################
+###############################################################################
+###############################################################################
 def printHelp():
     print '''\
-    
-            ...::: vitalHarshArm :::...      
+
+            ...::: vitalHarshArm :::...
 
        Making memory rad C++ classes for kix
 
- VHA template overview:
+    -----------------------------------------
+                 version: %s
+    -----------------------------------------
 
-    You should include all class templates in ONE template file. VHA will
-    produce a set of .cpp and .h files which you can copy into your project
-    directory. You should NOT modify these files by hand. Instead they should
-    be wrapped and accessed via that wrapper. 
+    usage:
 
- Template fields:
-   
-    You can specify any number of fields for each class and VHA will produce
-    appropriate get and set routines. Routines automatically provided are:
-   
-    int      : signed integer             : Get Set Increment Decrement Reset
-    uint     : unsigned integer           : Get Set Increment Decrement Reset
-    pointer  : pointer to tclass instance : Get Set Clear
-    data     : binary data container      : Get Set Clear
-    flag     : boolean flag               : Is Set Clear
-    
- Template format:
-     
-    Templates are written in JSON format (so no comments!). Class templates
-    include a mix of compulsory and optional sections.
+    vitalHarshArm <template> [-f <folder>] [-s <silent>]
 
- {
-     "classes" : [
-        {
-            ...
-             "className"   : "String",                       // Name of the class
-             "idName"      : "String",                       // Instance Id type name
-             <"parent"     : "None|String",>                 // Parent class, controls memory
-             <"templated"  : "True|False",>                  // Class uses C++ templates
-             <"deleteable" : "True|False",>                  // Instances can be deleted
-             <"active"     : "True|False",>                  // Use this template
-             "fields"      : [                               // Class fields
-                 {
-                     "f0" : "int,7,name,comment",            // 7 bit signed int at pos 0
-                     "f1" : "flag,1,name,comment",
-                     "f2" : "pointer,0,className,comment",
-                     "f3" : "uint,24,name,comment"          // 24 bit unsigned int at pos 41
-                     ...
-                 }
-             ]
-         }
-     ]
- }    '''
+''' % __version__
 
 if __name__ == '__main__':
-
-    #-------------------------------------------------
+#-------------------------------------------------
     # intialise the options parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description='Making memory rad C++ classes for kix')
     parser.add_argument('template', help="template file for the classes")
-    parser.add_argument('-f', '--folder', default='stdout', help="folder to write to")
-    parser.add_argument('-s', '--silent', action="store_true", default=False, help="run with no progress messages")
-        
+    parser.add_argument('-f', '--folder', default='.', help="folder to write to")
+    parser.add_argument('-t', '--test', action="store_true", default=False, help="create makefile and testing platform")
+
     #-------------------------------------------------
     # get and check options
     args = None
@@ -128,29 +102,25 @@ if __name__ == '__main__':
     else:
         args = parser.parse_args()
 
-    #-------------------------------------------------
-    # do what we came here to do
-    try:
-        VHA_parser = vitalHarshArm.VHAOptionsParser()
-        if(False):
-            import cProfile
-            cProfile.run('GM_parser.parseOptions(args)', 'prof')
-            ##########################################
-            ##########################################
-            # Use this in python console!
-            #import pstats
-            #p = pstats.Stats('prof')
-            #p.sort_stats('cumulative').print_stats(10)
-            #p.sort_stats('time').print_stats(10)
-            ##########################################
-            ##########################################            
-        else:        
-            VHA_parser.parseOptions(args)
-    except:
-        print "Unexpected error:", sys.exc_info()[0]
-        raise
-    
+    # profiling happens here. If you'd like to track the speed your code runs at
+    # then set the following to True and voila!
+    if(False):
+        import cProfile
+        cProfile.run('doWork(args)', 'profile')
+        ##########################################
+        ##########################################
+        # Use this in python console!
+        #import pstats
+        #p = pstats.Stats('prof')
+        #p.sort_stats('cumulative').print_stats(10)
+        #p.sort_stats('time').print_stats(10)
+        ##########################################
+        ##########################################
+    else:
+        doWork(args)
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
 ###############################################################################
+

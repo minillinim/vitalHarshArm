@@ -1,0 +1,37 @@
+{
+	"_size_of_int" 	       : 64,
+	"_size_of_idtype"      : 32,
+    "_classes" : [
+        {
+            "_className"   : "NodeHead",
+            "_prefix"	   : "NH",
+            "_description" : "Head of a NODE object",
+            "_defines"     : { "NH_MAX_CHAIN" : 7 },
+            "_deleteable"  : "True",
+            "_active"      : "True",
+            "_realloc"     : [1],
+            "_fields"      : [
+                {
+                    "_f0"  : { "_type":"uint", "_size":3, "_name":"chainLength", "_comment":"length of the node chain"},
+                    "_f1"  : { "_type":"flag", "_name":"root", "_comment":"is this the root node?"},
+                    "_f2"  : { "_type":"pointer", "_at":"NodeHead", "_name":"nextHead", "_comment":"point at next node"},
+                    "_f3"  : { "_type":"pointer", "_at":"NodeData", "_name":"data", "_comment":"point at next node"}
+                }
+            ]
+        },
+        {
+            "_className"   : "NodeData",
+            "_prefix"	   : "ND",
+            "_description" : "Data compartment of a NODE object",
+            "_deleteable"  : "True",
+            "_active"      : "True",
+            "_realloc"     : [1],
+            "_fields"      : [
+                {
+                    "_f0"  : { "_type":"pointer", "_at":"NodeData", "_name":"nextData", "_comment":"point at next data node"},
+                    "_f1"  : { "_type":"bdata", "_size":8, "_blocksize":32, "_name":"dataBlock", "_comment":"data"}
+                }
+            ]
+        }
+    ]
+}

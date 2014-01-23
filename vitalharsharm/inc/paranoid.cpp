@@ -1,10 +1,10 @@
 // --------------------------------------------------------------------
-// File: intdef.h
+// File: paranoid.cpp
 // Original Authors: Dominic Eales and Michael Imelfort
 // --------------------------------------------------------------------
 //
 // OVERVIEW:
-// Wrapper for defining different size ints
+// For debug mode. Lots of checking and printing functions (MACROS) to use
 //
 // --------------------------------------------------------------------
 // Copyright (C) 2009 - 2014 Michael Imelfort and Dominic Eales
@@ -25,59 +25,24 @@
 //
 // --------------------------------------------------------------------
 
-#ifndef intDef_h
-    #define intDef_h
-    
-    #include <stdint.h>
-    
-    //
-    // how to define 32/64 bit integers on your compiler?
-    // set this up so that: sizeof(uint_64t) == 8
-    // and: sizeof(uint_32t) == 4
-    //
-    #ifndef SIZE_OF_INT
-        //VHA_SIZE_OF_INT
-    #endif
+#ifdef MAKE_PARANOID
 
-    //
-    // All internal memory pointers are set as either 32 or 64 bit ints
-    // and then wrapped up accordingly.
-    //
+#include <iostream>
+#include <sstream>
+#include <stdlib.h>
+#include <stdexcept>
+#include "paranoid.h"
 
-    #ifndef SIZE_OF_IDTYPE
-        //VHA_SIZE_OF_IDTYPE
-    #endif
+using namespace std;
+void __paraAssert(const char * condition, const char * function, const char * file, int linenum)
+{
+#if EXIT_ON_ASSERT==1
+    std::ostringstream oss;
+    oss << "--------------------\nparaFAIL: " << condition << "\n" << "File: " << file << ":" << linenum << "\nFunction: " << function << endl;
+    throw std::out_of_range(oss.str());
+#else
+    cerr << "--------------------\nparaFAIL: " << condition << "\n" << "File: " << file << ":" << linenum << "\nFunction: " << function << endl;
+#endif
+}
 
-	//
-	// Shorthand wrapper for our longest ints
-	//
-	
-	#ifdef SIZE_OF_INT
-	# if (SIZE_OF_INT == 64)
-		typedef uint64_t uMDInt;
-		typedef int64_t sMDInt;
-	# elif (SIZE_OF_INT == 32)
-		typedef uint32_t uMDInt;
-		typedef int32_t sMDInt;
-	# else
-	#  error SIZE_OF_INT not correct
-	# endif
-		
-	//
-	// Id types
-    //
-		
-	# if (SIZE_OF_IDTYPE == 64)
-	   typedef uint64_t           idInt;
-	# elif (SIZE_OF_IDTYPE == 32)
-	   typedef uint32_t           idInt;
-	# else
-	#  error SIZE_OF_IDTYPE not correct
-	# endif
-	
-	#else
-	# error SIZE_OF_INT not defined
-	#endif
-
-#endif // intDef_h
-
+#endif //MAKE_PARANOID

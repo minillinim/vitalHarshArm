@@ -1,0 +1,157 @@
+/******************************************************************************
+ ** Implementation of __VHA_MM_NAME__ wrapper
+******************************************************************************/
+
+class __VHA_MM_NAME__ {
+public:
+    __VHA_STRUCT_NAME__* MM_ADDR_NULL;
+    
+    // construtor
+    __VHA_MM_NAME__() { mData = NULL; MM_ADDR_NULL = (__VHA_STRUCT_NAME__*)0; }
+    
+    // all we need to do is delete the memManager
+    ~__VHA_MM_NAME__(void) { if(mData != NULL) { delete mData; } }
+    
+    
+    bool initialise(idInt originalNumberOfBlocks) {
+        //-----
+        // Initialise this guy. Mostly a wrapper for the basic MemManager
+        //
+        std::vector<idInt> temp { __VHA_REALLOC__ };
+        
+        mData = new __VHA_MM_TYPE__MemManager<__VHA_STRUCT_NAME__>;
+        PARANOID_ASSERT(mData != NULL);
+        
+        // set the name
+        mData->_name="__VHA_MM_NAME__";
+        
+        // initialisation of the base MemManager
+        if(!mData->initialise(originalNumberOfBlocks, temp))
+            return false;
+        temp.clear();
+        
+        #ifdef MAKE_PARANOID
+        mData->debugvars();
+        #endif
+        
+        return true;
+    }
+    
+    //
+    // This section is used to get to the inner workings of the ID type
+    // for this reason you should treat these functions with care. 
+    // Wrap and unWrap should not see the light of day.
+    //
+    
+    template<class T>
+    inline idInt unWrapPointer(T ID)
+    {
+        //-----
+        // Get the guts of the ID
+        //
+        return mData->unWrapId(ID);
+    }
+    
+    template<class T>
+    inline void wrapPointer(idInt address, T * ID)
+    {
+        //-----
+        // Wrap the value in address in an Id of the right type
+        //
+        mData->wrapId(address, ID);
+    }
+    
+    
+    inline bool is__VHA_ID_NAME__(idInt address, __VHA_ID_NAME__ ID)
+    {
+        //-----
+        // see if the idInt given matches the __VHA_ID_NAME__ given
+        //
+        return (unWrapPointer(ID) == address);
+    }
+    
+    inline __VHA_ID_NAME__ get__VHA_ID_NAME__(idInt address)
+    {
+        //-----
+        // get a __VHA_ID_NAME__ Id by it's address
+        //
+        __VHA_ID_NAME__ ret_id;
+        wrapPointer(address, &ret_id);
+        return ret_id;
+    }
+    
+    inline bool isValidAddress(__VHA_ID_NAME__ ID)
+    {
+        //-----
+        // Determine if the addres is valid
+        //
+        return mData->isValidAddress(ID.get());
+    }
+    
+    inline __VHA_STRUCT_NAME__ * getAddr(__VHA_ID_NAME__ ID)
+    {
+        //-----
+        // get the memory address for this __VHA_ID_NAME__
+        //
+        PARANOID_ASSERT(mData->getAddress(ID.get()) != MM_ADDR_NULL);
+        return mData->getAddress(ID.get());
+    }
+    
+    inline __VHA_ID_NAME__ create__VHA_ID_NAME__(void)
+    {
+        //-----
+        // get a new __VHA_ID_NAME__ from the MemManager
+        //
+        __VHA_ID_NAME__ return_ID;
+        return_ID.set(mData->getNewId());
+        return return_ID;
+    }
+    
+    #ifdef DMM
+    inline bool destroy__VHA_ID_NAME__(__VHA_ID_NAME__ ID)
+    {
+        //-----
+        // delete a __VHA_ID_NAME__
+        //
+        return mData->freeId(ID.get());
+    }
+    #endif
+    
+private:
+    
+    __VHA_MM_TYPE__MemManager<__VHA_STRUCT_NAME__> * mData;
+};
+
+
+/******************************************************************************
+ ** Headers for __VHA_CLASS_NAME__ Class
+******************************************************************************/
+
+class __VHA_CLASS_NAME__ {
+public:
+    
+    // Constructor/Destructor
+    __VHA_CLASS_NAME__(idInt originalNumberOfBlocks) {
+        mData = new __VHA_MM_NAME__();
+        mData->initialise(originalNumberOfBlocks);
+    }
+    ~__VHA_CLASS_NAME__(void) {
+        if(mData != NULL) {
+            delete mData;
+        }       
+    }
+    
+    // New/Free wrappers
+    inline __VHA_ID_NAME__ newInstance(void) { return mData->create__VHA_ID_NAME__(); }
+    #ifdef DMM
+    inline bool deleteInstance( __VHA_ID_NAME__ ID ) { return mData->destroy__VHA_ID_NAME__( ID ); }
+    #endif
+    
+    // Get/Set/etc.. methods
+    __VHA_GET_SET__
+    
+private:
+    
+    __VHA_MM_NAME__ * mData;
+};
+

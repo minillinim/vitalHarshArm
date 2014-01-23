@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------
-// File: IdTypeDefs.h
+// File: idTypeDefs.h
 // Original Authors: Dominic Eales and Michael Imelfort
 // --------------------------------------------------------------------
 //
@@ -11,12 +11,12 @@
 // Think of it as an int wrapped in a class, wrapped in an enigma...
 //
 // --------------------------------------------------------------------
-// Copyright (C) 2009 - 2013 Michael Imelfort and Dominic Eales
+// Copyright (C) 2009 - 2014 Michael Imelfort and Dominic Eales
 // --------------------------------------------------------------------
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
+// by the Free Software Foundation, either version 2.1 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -24,7 +24,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
+// You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 // --------------------------------------------------------------------
@@ -65,9 +65,9 @@ using namespace std;
 // Can't touch this
 
 // forward declarations
-template<int MMBLOCKSIZE>
+template<typename MMSTRUCTTYPE>
 class MemManager;
-template<int MMBLOCKSIZE>
+template<typename MMSTRUCTTYPE>
 class DeletableMemManager;
 
 #define DEFINE_ID_TYPE( nAME , mEMmANAGERnAME, __tEMPLATEdEFINITION__ ) \
@@ -89,9 +89,9 @@ class nAME { \
 	inline IDTYPE subtract(IDTYPE a)	{ \
 		_x -= a; return _x;}\
 \
-    template<int MMBLOCKSIZE>\
+    template<typename MMSTRUCTTYPE>\
     friend class MemManager;\
-    template<int MMBLOCKSIZE>\
+    template<typename MMSTRUCTTYPE>\
     friend class DeletableMemManager;\
     __tEMPLATEdEFINITION__ \
     friend class mEMmANAGERnAME;\
@@ -131,11 +131,8 @@ class nAME { \
 // DEFINE_ID_TYPE(SomeId, SomeMemManager, );
 // DEFINE_ID_TYPE(SomeOtherId, SomeOtherMemManager, );
 //
-// #define template_int_A_int_B_ template<int A,int B>
-// DEFINE_ID_TYPE(TemplatedId, TemplatedMemManager, template_int_A_int_B_);
-//
 /////////////////////////////////////////////////
-// Leave the next line. VHA will add it's definitions here!
+// Definitions automatically added by VHA
 //
 //VHA
 //
