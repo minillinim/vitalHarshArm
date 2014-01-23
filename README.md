@@ -12,12 +12,12 @@ Should be as simple as
 
 ## Example usage
 
-	vitalHarshArm <template> [-f <folder>] [-t]
+    vitalHarshArm <template> [-f <folder>] [-t]
 
-	Will create c++ code corresponding to the classes defined in the template file.
+Will create c++ code corresponding to the classes defined in the template file.
 
-	-f specifies the folder to create the code in
-	-t will make a Makefile and a test.cpp file to allow for quick testing
+    -f specifies the folder to create the code in
+    -t will make a Makefile and a test.cpp file to allow for quick testing
 
 ### VHA template overview:
 
@@ -31,12 +31,12 @@ be wrapped and accessed via that wrapper.
 You can specify any number of fields for each class and VHA will produce
 appropriate get and set routines. Routines automatically provided are:
 
-int      : signed integer             : Get Set Increment Decrement Clear
-uint     : unsigned integer           : Get Set Increment Decrement Clear
-pointer  : pointer to tclass instance : Get Set Clear
-bdata    : blocked data container     : Get GetByIndex Set SetByIndex Clear
-flag     : boolean flag               : Is Set Clear
-float    : floating point number      : Get Set Clear
+    int      : signed integer             : Get Set Increment Decrement Clear
+    uint     : unsigned integer           : Get Set Increment Decrement Clear
+    pointer  : pointer to tclass instance : Get Set Clear
+    bdata    : blocked data container     : Get GetByIndex Set SetByIndex Clear
+    flag     : boolean flag               : Is Set Clear
+    float    : floating point number      : Get Set Clear
 
 ###Template format:
 
@@ -74,17 +74,17 @@ Compulsory words are prefixed with a '_'.
         ]
     }
 
-*       If this flag is set to False then you can not delete instances. This speeds things up a bit.
+    *       If this flag is set to False then you can not delete instances. This speeds things up a bit.
 
-**      When you instantiate one of the classes you tell it how many spaces to pre-allocate. Ex: calling Foo(80) will pre-allocate space for 80 Foos.
-        When this space is used up the memory management will automatically allocate more space. The integers here specify how this will happen.
-        "_realloc" : [1]        --> keep reallocating the same number of spaces as originally allocated. ie. 80 Foos each time
-        "_realloc" : [1,2]      --> allocate the same as original on the first reallocation and then half as many spaces as the original for all subsequent allocations. 80 Foos then 40 Foos for all subsequent allocations.
-        "_realloc" : [1,2,4]    --> 80 Foos, then 40 Foos, then 20 Foos for all subsequent allocation.
+    **      When you instantiate one of the classes you tell it how many spaces to pre-allocate. Ex: calling Foo(80) will pre-allocate space for 80 Foos.
+            When this space is used up the memory management will automatically allocate more space. The integers here specify how this will happen.
+            "_realloc" : [1]        --> keep reallocating the same number of spaces as originally allocated. ie. 80 Foos each time
+            "_realloc" : [1,2]      --> allocate the same as original on the first reallocation and then half as many spaces as the original for all subsequent allocations. 80 Foos then 40 Foos for all subsequent allocations.
+            "_realloc" : [1,2,4]    --> 80 Foos, then 40 Foos, then 20 Foos for all subsequent allocation.
 
-***     Fields are always identified as "_f0", "_f1", ... , "_fn". This isn't used the cpp, just when making it.
+    ***     Fields are always identified as "_f0", "_f1", ... , "_fn". This isn't used the cpp, just when making it.
 
-****    _size indicates the length of the array, _blocksize is any int flavour from <stdint> (uint8_t, uint16_t, ...)
+    ****    _size indicates the length of the array, _blocksize is any int flavour from <stdint> (uint8_t, uint16_t, ...)
 
 See the test folder for a working template example.
 
