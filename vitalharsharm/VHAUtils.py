@@ -338,7 +338,7 @@ class TClass:
             if f.type == "flag":
                 _str += "    unsigned int %s : 1;\n" % (f.name)
             elif f.type == "pointer":
-                _str += "    %s %s;\n" % (self.toIntIdType(className=f.at), f.name)
+                _str += "    idInt %s;\n" % (f.name)
             elif f.type == "float":
                 _str += "    float %s;\n" % (f.name)
             elif f.type == "bdata":
