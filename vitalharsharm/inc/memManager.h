@@ -43,7 +43,7 @@ using namespace std;
 #include <stdexcept>
 
 // local includes
-#include "intdef.h"3
+#include "intdef.h"
 #include "paranoid.h"
 
 //#define MM_ADDR_NULL    ((uMDInt*)0)

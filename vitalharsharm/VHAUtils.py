@@ -284,13 +284,17 @@ class TClass:
         keys = [str(i) for i in range(num_fields)]
         for key in keys:
             F = TClassField(self.sizeOfIdType)
-            size = F.validateAndPopulate(tmp["_f"+key])
+            size = int(F.validateAndPopulate(tmp["_f"+key]))
             self.fields.append(F)
 
             # if the field is a bdata type then we need to add a new ash define
             if F.type == "bdata":
                 def_str = "%s_default_%s_size" % (self.prefix, F.name)
-                self.hashDefines.append("#ifndef %s\n #define %s %d\n#endif"%(def_str, def_str, size))
+                try:
+                    self.hashDefines.append("#ifndef %s\n #define %s %d\n#endif"%(def_str, def_str, size))
+                except TypeError:
+                    # They may have used a hash define instead of an actual size
+                    self.hashDefines.append("#ifndef %s\n #define %s %s\n#endif"%(def_str, def_str, size))
                 bits_used += size * 8
             else:
                 bits_used += size
@@ -338,8 +342,12 @@ class TClass:
             elif f.type == "float":
                 _str += "    float %s;\n" % (f.name)
             elif f.type == "bdata":
-                def_str = "%s_default_%s_size" % (self.prefix, f.name)
-                _str += "    uint%d_t %s[%s];\n" % (f.blockSize, f.name, def_str)
+                if f.blockSize == 1:
+                    def_str = "%s_default_%s_size" % (self.prefix, f.name)
+                    _str += "    bool %s[%s];\n" % (f.name, def_str)
+                else:
+                    def_str = "%s_default_%s_size" % (self.prefix, f.name)
+                    _str += "    uint%d_t %s[%s];\n" % (f.blockSize, f.name, def_str)
             elif f.type == "int":
                 _str += "    int %s : %d;\n" % (f.name, f.size)
             elif f.type == "uint":
@@ -546,14 +554,14 @@ class TClassField:
                           '_comment',
                           '_blocksize']
 
-        self.validFieldTypes = ["int",
-                                "uint",
-                                "flag",
-                                "pointer",
-                                "float",
-                                "bdata"]
+        self.validFieldTypes = ["int",              # regular int
+                                "uint",             # unsigned int
+                                "flag",             # boolean
+                                "pointer",          # pointer to another VHA made type
+                                "float",            # floating point number
+                                "bdata"]            # block of ints (user selected size) or block of bools
 
-        self.validBlockSizes = [4,8,16,32,64]
+        self.validBlockSizes = [1,4,8,16,32,64]
 
     def validateAndPopulate(self, template):
         """Populate the fields containers and make sure everything looks sane
@@ -587,7 +595,7 @@ class TClassField:
             raise VHA_MissingKeywordException("'comment' keyword not defined for %r" % template)
 
         try:
-            self.size = template['_size']
+            self.size = int(template['_size'])
             if self.type == "pointer" or self.type == "flag" or self.type == "float":
                 raise VHA_BadKeywordException("'size' keyword used for '%s' for %r" % (self.type, template))
         except KeyError:
@@ -639,8 +647,8 @@ class TClassField:
             getSetStr += "    inline void clear_%s(%s ID) { mData->getAddr(ID)->%s = 0; }\n\n" % (self.name, idType, self.name)
 
         if self.type == "pointer":
-            getSetStr += "    inline %s get_%s(%s ID) { return mData->getAddr(ID)->%s; }\n" % (self.at+"_Id", self.name, idType, self.name)
-            getSetStr += "    inline void set_%s(%s ID, %s value) { mData->getAddr(ID)->%s = value; }\n" % (self.name, idType, self.at+"_Id", self.name)
+            getSetStr += "    inline %s get_%s(%s ID) { %s return_ID; mData->wrapPointer(mData->getAddr(ID)->%s, &return_ID); return return_ID; }\n" % (self.at+"_Id", self.name, self.at+"_Id", idType, self.name)
+            getSetStr += "    inline void set_%s(%s ID, %s value) { mData->getAddr(ID)->%s = (idInt)(mData->unWrapPointer(value)); }\n" % (self.name, idType, self.at+"_Id", self.name)
             getSetStr += "    inline void clear_%s(%s ID) { mData->getAddr(ID)->%s = 0; }\n\n" % (self.name, idType, self.name)
 
         if self.type == "float":
@@ -649,47 +657,86 @@ class TClassField:
             getSetStr += "    inline void clear_%s(%s ID) { mData->getAddr(ID)->%s = 0; }\n\n" % (self.name, idType, self.name)
 
         if self.type == "bdata":
-            getSetStr += "    inline uint%d_t* get_%s(%s ID) { return mData->getAddr(ID)->%s; }\n" % (self.blockSize, self.name, idType, self.name)
-            getSetStr += "    uint%d_t get_%s_by_index(%s ID, int index);\n" % (self.blockSize, self.name, idType)
-            getSetStr += "    inline void set_%s(%s ID, uint%d_t* value) { int i; for(i=0;i<%d;++i){mData->getAddr(ID)->%s[i] = value[i];} }\n" % (self.name,
+            if self.blockSize == 1:
+                getSetStr += "    inline bool get_%s(%s ID) { return mData->getAddr(ID)->%s; }\n" % (self.name, idType, self.name)
+                getSetStr += "    bool get_%s_by_index(%s ID, int index);\n" % (self.name, idType)
+                getSetStr += "    inline void set_%s(%s ID, bool* value) { int i; for(i=0;i<%d;++i){mData->getAddr(ID)->%s[i] = value[i];} }\n" % (self.name,
                                                                                                                                                    idType,
-                                                                                                                                                   self.blockSize,
                                                                                                                                                    self.size,
                                                                                                                                                    self.name)
-            getSetStr += "    void set_%s_by_index(%s ID, int index, uint%d_t value);\n" % (self.name, idType, self.blockSize)
-            getSetStr += "    inline void clear_%s(%s ID) { int i; for(i=0;i<%d;++i){mData->getAddr(ID)->%s[i] = 0;} }\n" % (self.name,
-                                                                                                                             idType,
-                                                                                                                             self.size,
-                                                                                                                             self.name)
-            getSetStr += "    inline int get_%s_blocksize(void) { return %d; }\n" % (self.name, self.blockSize)
-            getSetStr += "    inline int get_%s_size(void) { return %d; }\n" % (self.name, self.size)
+                getSetStr += "    void set_%s_by_index(%s ID, int index, bool value);\n" % (self.name, idType)
+                getSetStr += "    inline void clear_%s(%s ID) { int i; for(i=0;i<%d;++i){mData->getAddr(ID)->%s[i] = 0;} }\n" % (self.name,
+                                                                                                                                 idType,
+                                                                                                                                 self.size,
+                                                                                                                                 self.name)
+                getSetStr += "    inline int get_%s_size(void) { return %d; }\n" % (self.name, self.size)
+
+            else:
+                getSetStr += "    inline uint%d_t* get_%s(%s ID) { return mData->getAddr(ID)->%s; }\n" % (self.blockSize, self.name, idType, self.name)
+                getSetStr += "    uint%d_t get_%s_by_index(%s ID, int index);\n" % (self.blockSize, self.name, idType)
+                getSetStr += "    inline void set_%s(%s ID, uint%d_t* value) { int i; for(i=0;i<%d;++i){mData->getAddr(ID)->%s[i] = value[i];} }\n" % (self.name,
+                                                                                                                                                       idType,
+                                                                                                                                                       self.blockSize,
+                                                                                                                                                       self.size,
+                                                                                                                                                       self.name)
+                getSetStr += "    void set_%s_by_index(%s ID, int index, uint%d_t value);\n" % (self.name, idType, self.blockSize)
+                getSetStr += "    inline void clear_%s(%s ID) { int i; for(i=0;i<%d;++i){mData->getAddr(ID)->%s[i] = 0;} }\n" % (self.name,
+                                                                                                                                 idType,
+                                                                                                                                 self.size,
+                                                                                                                                 self.name)
+                getSetStr += "    inline int get_%s_blocksize(void) { return %d; }\n" % (self.name, self.blockSize)
+                getSetStr += "    inline int get_%s_size(void) { return %d; }\n" % (self.name, self.size)
 
 
         return getSetStr
 
     def toGetSetImplementation(self, getSetStr, idType, className):
         if self.type == "bdata":
-            getSetStr += "        //%s  -- %s\n" % (self.name, self.comment)
-            getSetStr += """uint%d_t %s::get_%s_by_index(%s ID, int index) {
-    PARANOID_ASSERT(index < %d);
-    PARANOID_ASSERT(index >= 0);
-    if(index > %d || index < 0) {
-        std::ostringstream oss;
-        oss << "[%s::get_%s_by_index] index " << index << " out of range (max == " << %d << ")" << std::endl;
-        throw std::out_of_range(oss.str());
-    }
-    return mData->getAddr(ID)->%s[index];\n}\n\n""" % (self.blockSize, className, self.name, idType, self.size, self.size-1, className, self.name, self.size-1, self.name)
+            if self.blockSize == 1:
+                getSetStr += "        //%s  -- %s\n" % (self.name, self.comment)
+                getSetStr += """bool %s::get_%s_by_index(%s ID, int index) {
+        PARANOID_ASSERT(index < %d);
+        PARANOID_ASSERT(index >= 0);
+        if(index > %d || index < 0) {
+            std::ostringstream oss;
+            oss << "[%s::get_%s_by_index] index " << index << " out of range (max == " << %d << ")" << std::endl;
+            throw std::out_of_range(oss.str());
+        }
+        return mData->getAddr(ID)->%s[index];\n}\n\n""" % (className, self.name, idType, self.size, self.size-1, className, self.name, self.size-1, self.name)
 
 
-            getSetStr += """void %s::set_%s_by_index(%s ID, int index, uint%d_t value) {
-    PARANOID_ASSERT(index < %d);
-    PARANOID_ASSERT(index >= 0);
-    if(index > %d || index < 0) {
-        std::ostringstream oss;
-        oss << "[%s::set_%s_by_index] index " << index << " out of range (max == " << %d << ")" << std::endl;
-        throw std::out_of_range(oss.str());
-    }
-    mData->getAddr(ID)->%s[index] = value;\n}\n\n""" % (className, self.name, idType, self.blockSize, self.size, self.size-1, className, self.name, self.size-1, self.name)
+                getSetStr += """void %s::set_%s_by_index(%s ID, int index, bool value) {
+        PARANOID_ASSERT(index < %d);
+        PARANOID_ASSERT(index >= 0);
+        if(index > %d || index < 0) {
+            std::ostringstream oss;
+            oss << "[%s::set_%s_by_index] index " << index << " out of range (max == " << %d << ")" << std::endl;
+            throw std::out_of_range(oss.str());
+        }
+        mData->getAddr(ID)->%s[index] = value;\n}\n\n""" % (className, self.name, idType, self.size, self.size-1, className, self.name, self.size-1, self.name)
+
+            else:
+                getSetStr += "        //%s  -- %s\n" % (self.name, self.comment)
+                getSetStr += """uint%d_t %s::get_%s_by_index(%s ID, int index) {
+        PARANOID_ASSERT(index < %d);
+        PARANOID_ASSERT(index >= 0);
+        if(index > %d || index < 0) {
+            std::ostringstream oss;
+            oss << "[%s::get_%s_by_index] index " << index << " out of range (max == " << %d << ")" << std::endl;
+            throw std::out_of_range(oss.str());
+        }
+        return mData->getAddr(ID)->%s[index];\n}\n\n""" % (self.blockSize, className, self.name, idType, self.size, self.size-1, className, self.name, self.size-1, self.name)
+
+
+                getSetStr += """void %s::set_%s_by_index(%s ID, int index, uint%d_t value) {
+        PARANOID_ASSERT(index < %d);
+        PARANOID_ASSERT(index >= 0);
+        if(index > %d || index < 0) {
+            std::ostringstream oss;
+            oss << "[%s::set_%s_by_index] index " << index << " out of range (max == " << %d << ")" << std::endl;
+            throw std::out_of_range(oss.str());
+        }
+        mData->getAddr(ID)->%s[index] = value;\n}\n\n""" % (className, self.name, idType, self.blockSize, self.size, self.size-1, className, self.name, self.size-1, self.name)
 
         return getSetStr
 
